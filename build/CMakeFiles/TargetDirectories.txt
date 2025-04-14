@@ -1,3 +1,0 @@
-/home/sahdeek/projects/planet_sim/build/CMakeFiles/glfw_opengl.dir
-/home/sahdeek/projects/planet_sim/build/CMakeFiles/edit_cache.dir
-/home/sahdeek/projects/planet_sim/build/CMakeFiles/rebuild_cache.dir

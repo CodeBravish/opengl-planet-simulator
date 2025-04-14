@@ -1,1 +1,0 @@
-/sbin/c++ -Wl,--dependency-file=CMakeFiles/glfw_opengl.dir/link.d CMakeFiles/glfw_opengl.dir/src/main.cpp.o CMakeFiles/glfw_opengl.dir/src/glad.c.o -o glfw_opengl  /usr/lib/libglfw.so.3.4 -lglm
