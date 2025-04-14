@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/sahdeek/projects/planet_sim/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
