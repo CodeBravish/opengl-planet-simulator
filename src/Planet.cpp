@@ -1,4 +1,5 @@
 #include "Planet.h"
+#include "Renderer/Shader.h"
 
 #include <cmath>
 #include <vector>
@@ -7,18 +8,52 @@ extern const float PI;
 
 Planet::Planet(vec3 position, float radius, float mass)
     : position(position), radius(radius), mass(mass) {
+    initVertexData();
+}
 
-    }
+void Planet::render(const Shader& shader) {
+    mat4 model = mat4(1.0f);
 
-void Planet::initVertexData() {
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
+    model = translate(model, this->position);
+    model = scale(model, vec3(0.5f));
+
+    unsigned int modelLoc = glGetUniformLocation(shader.ID, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
+
+    // Color and Grid on Planet
+    vec3 color = vec3(1.0f, 0.0f, 0.0f);
+    unsigned int colorLoc = glGetUniformLocation(shader.ID, "color");
+    glUniform3fv(colorLoc, 1, value_ptr(color));
+
+    // 1. Draw filled sphere
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+
+    color = vec3(0.0f, 0.0f, 0.0f);
+    glUniform3fv(colorLoc, 1, value_ptr(color));
+
+    // 2. Draw wireframe on top
+    glEnable(GL_POLYGON_OFFSET_LINE);
+
+    glPolygonOffset(-1.0f, -1.0f);  // Push wireframe forward slightly
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(1.0f); 
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    glDisable(GL_POLYGON_OFFSET_LINE);
+
+    // Reset to fill mode
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+vector<GLuint> Planet::initVertexData() {
+    std::vector<GLfloat> vertices;
 
     float radius = 1;
     unsigned int sectorCount = 36;
     unsigned int stackCount = 18;
 
-    float x, y, z, xy;                            // vertex position
+    float x, y, z, xy;  // vertex position
 
     float sectorStep = 2 * PI / sectorCount;
     float stackStep = PI / stackCount;
@@ -29,15 +64,12 @@ void Planet::initVertexData() {
         xy = radius * cosf(stackAngle);       // r * cos(u)
         z = radius * sinf(stackAngle);        // r * sin(u)
 
-        // add (sectorCount+1) vertices per stack
-        // first and last vertices have same position and normal, but different tex
-        // coords
         for (int j = 0; j <= sectorCount; ++j) {
             sectorAngle = j * sectorStep;  // starting from 0 to 2pi
 
             // vertex position (x, y, z)
-            x = xy * cosf(sectorAngle);  // r * cos(u) * cos(v)
-            y = xy * sinf(sectorAngle);  // r * cos(u) * sin(v)
+            x = xy * cosf(sectorAngle);
+            y = xy * sinf(sectorAngle);
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
@@ -55,27 +87,27 @@ void Planet::initVertexData() {
             // 2 triangles per sector excluding first and last stacks
             // k1 => k2 => k1+1
             if (i != 0) {
-                indices.push_back(k1);
-                indices.push_back(k2);
-                indices.push_back(k1 + 1);
+                this->indices.push_back(k1);
+                this->indices.push_back(k2);
+                this->indices.push_back(k1 + 1);
             }
 
             // k1+1 => k2 => k2+1
             if (i != (stackCount - 1)) {
-                indices.push_back(k1 + 1);
-                indices.push_back(k2);
-                indices.push_back(k2 + 1);
+                this->indices.push_back(k1 + 1);
+                this->indices.push_back(k2);
+                this->indices.push_back(k2 + 1);
             }
 
-            // store indices for lines
-            // vertical lines for all stacks, k1 => k2
-            lineIndices.push_back(k1);
-            lineIndices.push_back(k2);
-            if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
-            {
-                lineIndices.push_back(k1);
-                lineIndices.push_back(k1 + 1);
-            }
+            // // store indices for lines
+            // // vertical lines for all stacks, k1 => k2
+            // lineIndices.push_back(k1);
+            // lineIndices.push_back(k2);
+            // if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
+            // {
+            //     lineIndices.push_back(k1);
+            //     lineIndices.push_back(k1 + 1);
+            // }
         }
     }
 
@@ -88,14 +120,14 @@ void Planet::initVertexData() {
     glBindVertexArray(this->VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(),
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(),
                  GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
                  indices.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
