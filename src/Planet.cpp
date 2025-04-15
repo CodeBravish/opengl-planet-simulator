@@ -2,20 +2,23 @@
 #include "Renderer/Shader.h"
 
 #include <cmath>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <vector>
 
-extern const float PI;
-
-Planet::Planet(vec3 position, float radius, float mass)
-    : position(position), radius(radius), mass(mass) {
+Planet::Planet(vec3 position, vec3 velocity, float radius, float mass)
+    : position(position), velocity(velocity), radius(radius), mass(mass) {
     initVertexData();
 }
 
 void Planet::render(const Shader& shader) {
+    glBindVertexArray(this->VAO);
+
     mat4 model = mat4(1.0f);
 
-    model = translate(model, this->position);
-    model = scale(model, vec3(0.5f));
+    model = glm::translate(model, this->position);
+    model = glm::scale(model, vec3(this->radius));
+    // model = glm::rotate(model, PI / 2, glm::vec3(1.0f, 0.0f, 0.0f));
 
     unsigned int modelLoc = glGetUniformLocation(shader.ID, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
@@ -38,7 +41,7 @@ void Planet::render(const Shader& shader) {
     glPolygonOffset(-1.0f, -1.0f);  // Push wireframe forward slightly
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(1.0f); 
+    glLineWidth(1.0f);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glDisable(GL_POLYGON_OFFSET_LINE);
 
@@ -46,7 +49,7 @@ void Planet::render(const Shader& shader) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-vector<GLuint> Planet::initVertexData() {
+void Planet::initVertexData() {
     std::vector<GLfloat> vertices;
 
     float radius = 1;
@@ -134,4 +137,28 @@ vector<GLuint> Planet::initVertexData() {
     glBindVertexArray(0);
 
     glEnable(GL_DEPTH_TEST);
+}
+
+void Planet::update(const vector<Planet>& other_planets, float delta_time) {
+    const float G = 6.67e-11f;
+
+    for (unsigned int i = 0; i < other_planets.size(); i++) {
+        const Planet& other_planet = other_planets[i];
+
+        // if (this == &other_planet) continue;
+
+        vec3 distance_vector = other_planet.position - this->position;
+        vec3 distance_normal = glm::normalize(distance_vector);
+        float distance_mag = glm::length(distance_vector);
+
+        if (distance_mag == 0) continue;
+
+        // Calculate Gravitional Acceleration from Each Planet
+        vec3 acceleration =
+            distance_normal * G * other_planet.mass / (distance_mag * distance_mag);
+
+        this->velocity += acceleration * delta_time;
+    }
+
+    this->position += this->velocity * delta_time;
 }

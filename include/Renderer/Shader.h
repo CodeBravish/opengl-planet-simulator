@@ -1,7 +1,8 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include "../glad/glad.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 #include <fstream>
 #include <iostream>
@@ -70,11 +71,6 @@ class Shader {
     // ------------------------------------------------------------------------
     void use() {
         glUseProgram(ID);
-        float timeValue = glfwGetTime();
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(ID, "color");
-        glUseProgram(ID);
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
     }
     // utility uniform functions
     // ------------------------------------------------------------------------

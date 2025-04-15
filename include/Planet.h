@@ -14,23 +14,27 @@
 using namespace std;
 using namespace glm;
 
+extern const float PI;
+
 class Planet {
    public:
     vec3 position;
     float mass;
     float radius;
 
-    glm::vec3 velocity;
+    vec3 velocity;
 
     // Planet();
-    Planet(vec3 position, float radius, float mass);
+    Planet(vec3 position, vec3 velocity,
+               float radius = 1.0f, float mass = 500.0f);
 
     void render(const Shader&);
+    void update(const vector<Planet>& other_planets, float delta_time);
 
    private:
     // Physical Attributes
-    float orbitRadius;
-    float orbitSpeed;
+    float orbit_radius;
+    float orbit_speed;
 
     glm::vec3 color = vec3(1.0f, 1.0f, 0.0f);
 
@@ -42,7 +46,7 @@ class Planet {
     unsigned int latCount = 36;
     unsigned int longCount = 18;
 
-    vector<GLuint> initVertexData();
+    void initVertexData();
 };
 
 #endif
