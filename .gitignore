@@ -1,0 +1,33 @@
+# Compiled object files
+*.o
+
+# Executables
+*.exe
+*.out
+
+# Compiled libraries
+*.a
+*.so
+
+# Build directories
+build/
+bin/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sln
+*.vcxproj
+*.xcodeproj
+
+# Dependency directories
+vendor/
+
+# Logs and generated files
+*.log
+*.txt
+*.log.*
+*.txt.*
+
+# Cache
+.cache/
