@@ -8,11 +8,7 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
-
-set(SOURCES
-    src/main.cpp
-    src/glad.c
-)
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(glfw_opengl ${SOURCES})
 
