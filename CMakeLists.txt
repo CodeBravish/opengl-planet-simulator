@@ -12,9 +12,26 @@ find_package(glm REQUIRED)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
 
-add_executable(planet_sim ${SOURCES})
+file(GLOB IMGUI_SOURCES
+    ${PROJECT_SOURCE_DIR}/external/imgui/imgui.cpp
+    ${PROJECT_SOURCE_DIR}/external/imgui/imgui_draw.cpp
+    ${PROJECT_SOURCE_DIR}/external/imgui/imgui_tables.cpp
+    ${PROJECT_SOURCE_DIR}/external/imgui/imgui_widgets.cpp
+    ${PROJECT_SOURCE_DIR}/external/imgui/imgui_demo.cpp
+)
 
-target_include_directories(planet_sim PRIVATE ${PROJECT_SOURCE_DIR}/include)
+set(IMGUI_BACKEND_SOURCES
+    external/imgui/backends/imgui_impl_glfw.cpp
+    external/imgui/backends/imgui_impl_opengl3.cpp
+)
+
+add_executable(planet_sim ${SOURCES} ${IMGUI_SOURCES} ${IMGUI_BACKEND_SOURCES})
+
+target_include_directories(planet_sim PRIVATE 
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/external/imgui
+    ${PROJECT_SOURCE_DIR}/external/imgui/backends
+)
 
 target_link_libraries(planet_sim
     PRIVATE

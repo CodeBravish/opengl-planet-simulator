@@ -16,6 +16,10 @@
 #include "Planet.h"
 #include "Renderer/Shader.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 using namespace std;
 using namespace glm;
 
@@ -30,7 +34,7 @@ unsigned int screen_width = 800;
 unsigned int screen_height = 600;
 
 // Camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 20.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float cam_yaw = 0.0;
@@ -44,6 +48,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -61,7 +66,7 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -70,6 +75,22 @@ int main() {
         return -1;
     }
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |=
+        ImGuiConfigFlags_NavEnableKeyboard;               // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // IF using Docking Branch
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(
+        window, true);  // Second param install_callback=true will install GLFW
+                             // callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+    // ##########
+
     // build and compile our shader program
     // ------------------------------------
     Shader DefaultShader("../assets/shaders/default.vert", "../assets/shaders/default.frag");
@@ -77,8 +98,8 @@ int main() {
     DefaultShader.use();
 
     vector<Planet> planets = {
-        Planet(vec3(5.0f, 0.0f, 0.0f), vec3(0.0f, 0.01f, 0.0f), 2.0f, 10.0f),
-        Planet(vec3(-5.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 1.0f, 50.0f)};
+        Planet(vec3(5.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 2.0f, 10.0e8f),
+        Planet(vec3(-5.0f, 0.0f, 0.0f), vec3(0.0f, 0.08f, 0.0f), 1.0f, 50.0f)};
 
     // planets.emplace_back(vec3(2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
     // planets.emplace_back(vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
@@ -102,6 +123,18 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        // ###########
+
+        ImGui::Begin("Hello, world!");
+
+        ImGui::DragFloat3("Camera Postion", glm::value_ptr(cameraUp), 0.1f);
+
+        ImGui::End();
 
         // Camera
         mat4 projection = mat4(1.0f);
@@ -129,13 +162,19 @@ int main() {
         }
         cout << endl << endl;
 
-        //
+        // Rendering
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // #################
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     glfwTerminate();
     return 0;
 }
