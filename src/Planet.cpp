@@ -6,9 +6,9 @@
 #include <glm/geometric.hpp>
 #include <vector>
 
+using glm::mat4;
 using glm::vec3;
 using glm::vec4;
-using glm::mat4;
 using namespace std;
 
 Planet::Planet(vec3 position, vec3 velocity, float radius, float mass)
@@ -23,7 +23,9 @@ void Planet::render(const Shader& shader) {
 
     model = glm::translate(model, this->position);
     model = glm::scale(model, vec3(this->radius));
-    // model = glm::rotate(model, PI / 2, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model,
+                        (float)glfwGetTime() * this->angular_speed,
+                        vec3(0.0f, 0.0f, 1.0f));
 
     unsigned int modelLoc = glGetUniformLocation(shader.ID, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));

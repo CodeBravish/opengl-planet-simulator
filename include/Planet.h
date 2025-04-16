@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <glm/trigonometric.hpp>
 #include <vector>
 
 extern const float PI;
@@ -32,6 +33,7 @@ class Planet {
     // Physical Attributes
     float orbit_radius;
     float orbit_speed;
+    float angular_speed = glm::radians(-50.0f);
 
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 0.0f);
 
