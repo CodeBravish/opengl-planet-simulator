@@ -25,6 +25,7 @@ using namespace glm;
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
 const float PI = pi<float>();
@@ -49,7 +50,6 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -66,6 +66,7 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, mouse_scroll_callback);
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
@@ -87,13 +88,14 @@ int main() {
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(
         window, true);  // Second param install_callback=true will install GLFW
-                             // callbacks and chain to existing ones.
+                        // callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init();
     // ##########
 
     // build and compile our shader program
     // ------------------------------------
-    Shader DefaultShader("../assets/shaders/default.vert", "../assets/shaders/default.frag");
+    Shader DefaultShader("../assets/shaders/default.vert",
+                         "../assets/shaders/default.frag");
 
     DefaultShader.use();
 
@@ -132,7 +134,7 @@ int main() {
 
         ImGui::Begin("Hello, world!");
 
-        ImGui::DragFloat3("Camera Postion", glm::value_ptr(cameraUp), 0.1f);
+        ImGui::DragFloat3("Camera Postion", glm::value_ptr(cameraUp), 0.01f);
 
         ImGui::End();
 
@@ -144,7 +146,7 @@ int main() {
         view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         projection =
-            perspective(radians(75.0f), (float)screen_width / (float)screen_height,
+            perspective(radians(50.0f), (float)screen_width / (float)screen_height,
                         0.1f, 100.0f);
 
         unsigned int viewLoc = glGetUniformLocation(DefaultShader.ID, "view");
@@ -250,4 +252,10 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     direction.y = sin(radians(cam_pitch));
     direction.z = sin(radians(cam_yaw)) * cos(radians(cam_pitch));
     cameraFront = glm::normalize(direction);
+}
+
+void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+    const float cameraSpeed = 0.2f * 1;  // adjust accordingly
+
+    cameraPos +=  cameraFront * static_cast<float>(yoffset);
 }
