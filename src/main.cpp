@@ -60,7 +60,7 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    // glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
@@ -72,7 +72,7 @@ int main() {
 
     // build and compile our shader program
     // ------------------------------------
-    Shader DefaultShader("../Shaders/default.vert", "../Shaders/default.frag");
+    Shader DefaultShader("../assets/shaders/default.vert", "../assets/shaders/default.frag");
 
     DefaultShader.use();
 
@@ -148,13 +148,14 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
 
     const vec3 horizontalFront = normalize(cameraFront * vec3(1.0f, 0.0f, 1.0f));
+    const vec3 cameraUpNorm = normalize(cameraUp);
 
     const float cameraSpeed = 0.2f * 1;  // adjust accordingly
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * horizontalFront;
+        cameraPos += cameraSpeed * cameraUp;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * horizontalFront;
+        cameraPos -= cameraSpeed * cameraUp;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         cameraPos -=
             glm::normalize(glm::cross(horizontalFront, cameraUp)) * cameraSpeed;

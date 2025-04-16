@@ -6,6 +6,11 @@
 #include <glm/geometric.hpp>
 #include <vector>
 
+using glm::vec3;
+using glm::vec4;
+using glm::mat4;
+using namespace std;
+
 Planet::Planet(vec3 position, vec3 velocity, float radius, float mass)
     : position(position), velocity(velocity), radius(radius), mass(mass) {
     initVertexData();
@@ -24,24 +29,25 @@ void Planet::render(const Shader& shader) {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
 
     // Color and Grid on Planet
-    vec3 color = vec3(1.0f, 0.0f, 0.0f);
+    vec3 color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
     unsigned int colorLoc = glGetUniformLocation(shader.ID, "color");
-    glUniform3fv(colorLoc, 1, value_ptr(color));
+    glUniform4fv(colorLoc, 1, value_ptr(color));
 
     // 1. Draw filled sphere
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
-    color = vec3(0.0f, 0.0f, 0.0f);
-    glUniform3fv(colorLoc, 1, value_ptr(color));
-
     // 2. Draw wireframe on top
+    color = vec4(1.0f, 0.3f, 0.3f, 0.0f);
+    glUniform4fv(colorLoc, 1, value_ptr(color));
+
     glEnable(GL_POLYGON_OFFSET_LINE);
 
     glPolygonOffset(-1.0f, -1.0f);  // Push wireframe forward slightly
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(1.0f);
+    glLineWidth(0.5f);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glDisable(GL_POLYGON_OFFSET_LINE);
 
@@ -79,7 +85,7 @@ void Planet::initVertexData() {
         }
     }
 
-    std::vector<int> lineIndices;
+    // std::vector<int> lineIndices;
     int k1, k2;
 
     for (int i = 0; i < stackCount; ++i) {
@@ -102,15 +108,15 @@ void Planet::initVertexData() {
                 this->indices.push_back(k2 + 1);
             }
 
-            // // store indices for lines
-            // // vertical lines for all stacks, k1 => k2
-            // lineIndices.push_back(k1);
-            // lineIndices.push_back(k2);
-            // if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
-            // {
-            //     lineIndices.push_back(k1);
-            //     lineIndices.push_back(k1 + 1);
-            // }
+            // store indices for lines
+            // vertical lines for all stacks, k1 => k2
+            this->line_indices.push_back(k1);
+            this->line_indices.push_back(k2);
+            if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
+            {
+                this->line_indices.push_back(k1);
+                this->line_indices.push_back(k1 + 1);
+            }
         }
     }
 

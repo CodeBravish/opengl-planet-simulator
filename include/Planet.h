@@ -11,37 +11,35 @@
 
 #include <vector>
 
-using namespace std;
-using namespace glm;
-
 extern const float PI;
 
 class Planet {
    public:
-    vec3 position;
+    glm::vec3 position;
     float mass;
     float radius;
 
-    vec3 velocity;
+    glm::vec3 velocity;
 
     // Planet();
-    Planet(vec3 position, vec3 velocity,
+    Planet(glm::vec3 position, glm::vec3 velocity,
                float radius = 1.0f, float mass = 500.0f);
 
     void render(const Shader&);
-    void update(const vector<Planet>& other_planets, float delta_time);
+    void update(const std::vector<Planet>& other_planets, float delta_time);
 
    private:
     // Physical Attributes
     float orbit_radius;
     float orbit_speed;
 
-    glm::vec3 color = vec3(1.0f, 1.0f, 0.0f);
+    glm::vec3 color = glm::vec3(1.0f, 1.0f, 0.0f);
 
     // Vertex Data
     GLuint shader_ID;
     GLuint VAO;
     std::vector<GLuint> indices;
+    std::vector<GLuint> line_indices;
 
     unsigned int latCount = 36;
     unsigned int longCount = 18;
