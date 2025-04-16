@@ -34,7 +34,7 @@ unsigned int screen_width = 800;
 unsigned int screen_height = 600;
 
 // Camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 20.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 50.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float cam_yaw = 0.0;
@@ -47,7 +47,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 
 #ifdef __APPLE__
@@ -144,7 +144,7 @@ int main() {
         view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         projection =
-            perspective(radians(90.0f), (float)screen_width / (float)screen_height,
+            perspective(radians(75.0f), (float)screen_width / (float)screen_height,
                         0.1f, 100.0f);
 
         unsigned int viewLoc = glGetUniformLocation(DefaultShader.ID, "view");
