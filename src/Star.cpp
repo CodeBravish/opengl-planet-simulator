@@ -13,12 +13,12 @@ using glm::vec3;
 using glm::vec4;
 using namespace std;
 
-Planet::Planet(vec3 position, vec3 velocity, float mass, float radius)
+Star::Star(vec3 position, vec3 velocity, float mass, float radius)
     : Body(position, velocity, mass), radius(radius) {
     initVertexData();
 }
 
-void Planet::render(const Shader& shader) {
+void Star::render(const Shader& shader) {
     glBindVertexArray(this->VAO);
 
     mat4 model = mat4(1.0f);
@@ -32,7 +32,7 @@ void Planet::render(const Shader& shader) {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
 
     // Color and Grid on Planet
-    vec3 color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    vec3 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     unsigned int colorLoc = glGetUniformLocation(shader.ID, "color");
     glUniform4fv(colorLoc, 1, value_ptr(color));
@@ -42,7 +42,7 @@ void Planet::render(const Shader& shader) {
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-void Planet::initVertexData() {
+void Star::initVertexData() {
     std::vector<GLfloat> vertices;
 
     float radius = 1;
@@ -132,7 +132,7 @@ void Planet::initVertexData() {
     glEnable(GL_DEPTH_TEST);
 }
 
-void Planet::update(const vector<Body*>& other_bodies, float delta_time) {
+void Star::update(const vector<Body*>& other_bodies, float delta_time) {
     const float G = 6.67e-11f;
 
     for (unsigned int i = 0; i < other_bodies.size(); i++) {

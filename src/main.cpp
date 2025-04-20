@@ -13,7 +13,7 @@
 #include <ostream>
 #include <vector>
 
-#include "Planet.h"
+#include "Celestial_Body.h"
 #include "Renderer/Shader.h"
 
 #include "imgui.h"
@@ -31,11 +31,11 @@ void processInput(GLFWwindow *window);
 const float PI = pi<float>();
 
 // settings
-unsigned int screen_width = 800;
-unsigned int screen_height = 600;
+unsigned int screen_width = 1070;
+unsigned int screen_height = 1070;
 
 // Camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 50.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10000.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float cam_yaw = 0.0;
@@ -48,7 +48,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -100,23 +100,33 @@ int main() {
     DefaultShader.use();
 
     vector<Planet> planets = {
-        Planet(vec3(5.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 2.0f, 10.0e8f),
-        Planet(vec3(-5.0f, 0.0f, 0.0f), vec3(0.0f, 0.08f, 0.0f), 1.0f, 50.0f)};
+        Planet(vec3(-1500.0f, 0.0f, 0.0f), vec3(0.0f, 0.03f, 0.0f), 50.0f, 71.492f)};
 
     // planets.emplace_back(vec3(2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
     // planets.emplace_back(vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
 
     // Planet planet1(vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f));
 
+    vector<Body *> bodies;
+
+    for (auto &planet : planets) {
+        bodies.push_back(&planet);
+    }
+
+    Star sun(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 10.0e8f, 696.340f);
+
+    bodies.push_back(&sun);
+
     // render loop
     // -----------
     DefaultShader.use();
 
     float prev_time = static_cast<float>(glfwGetTime());
+    float time_multplier = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
         float curr_time = static_cast<float>(glfwGetTime());
-        float delta_time = curr_time - prev_time;
+        float delta_time = (curr_time - prev_time) * time_multplier;
         prev_time = curr_time;
 
         processInput(window);
@@ -132,9 +142,11 @@ int main() {
         ImGui::NewFrame();
         // ###########
 
-        ImGui::Begin("Hello, world!");
+        ImGui::Begin("Menu");
 
-        ImGui::DragFloat3("Camera Postion", glm::value_ptr(cameraUp), 0.01f);
+        ImGui::DragFloat("s/s", &time_multplier, 1.0f);
+
+        ImGui::DragFloat3("Camera Postion", glm::value_ptr(cameraPos), 0.01f);
 
         ImGui::End();
 
@@ -147,7 +159,7 @@ int main() {
 
         projection =
             perspective(radians(50.0f), (float)screen_width / (float)screen_height,
-                        0.1f, 100.0f);
+                        0.1f, 1000000.0f);
 
         unsigned int viewLoc = glGetUniformLocation(DefaultShader.ID, "view");
         unsigned int projectionLoc =
@@ -159,9 +171,12 @@ int main() {
 
         // Draw Planet
         for (unsigned int i = 0; i < planets.size(); i++) {
-            planets[i].update(planets, 1.0f);
+            planets[i].update(bodies, delta_time);
             planets[i].render(DefaultShader);
         }
+        sun.update(bodies, delta_time);
+        sun.render(DefaultShader);
+
         cout << endl << endl;
 
         // Rendering
@@ -191,7 +206,7 @@ void processInput(GLFWwindow *window) {
     const vec3 horizontalFront = normalize(cameraFront * vec3(1.0f, 0.0f, 1.0f));
     const vec3 cameraUpNorm = normalize(cameraUp);
 
-    const float cameraSpeed = 0.2f * 1;  // adjust accordingly
+    const float cameraSpeed = 100.0;  // adjust accordingly
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         cameraPos += cameraSpeed * cameraUp;
@@ -255,7 +270,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 }
 
 void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    const float cameraSpeed = 0.2f * 1;  // adjust accordingly
+    const float cameraSpeed = 1000.0;  // adjust accordingly
 
-    cameraPos +=  cameraFront * static_cast<float>(yoffset);
+    cameraPos += cameraFront * static_cast<float>(yoffset) * cameraSpeed;
 }
