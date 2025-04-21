@@ -46,8 +46,8 @@ void Star::initVertexData() {
     std::vector<GLfloat> vertices;
 
     float radius = 1;
-    unsigned int sectorCount = 36;
-    unsigned int stackCount = 18;
+    unsigned int sectorCount = 128;
+    unsigned int stackCount = 64;
 
     float x, y, z, xy;  // vertex position
 
@@ -151,8 +151,6 @@ void Star::update(const vector<Body*>& other_bodies, float delta_time) {
             distance_normal * G * other_body->mass / (distance_mag * distance_mag);
 
         this->velocity += acceleration * delta_time;
-
-        cout << "Distance: " << stringVec3(distance_vector) << endl;
     }
 
     this->position += this->velocity * delta_time;

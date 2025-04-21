@@ -1,10 +1,12 @@
 #include "Celestial_Body.h"
 #include "Renderer/Shader.h"
 #include "utils/Formating.h"
+#include "utils/Geometry.h"
 
 #include <cmath>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
+#include <glm/gtc/constants.hpp>
 #include <ostream>
 #include <vector>
 
@@ -44,10 +46,11 @@ void Planet::render(const Shader& shader) {
 
 void Planet::initVertexData() {
     std::vector<GLfloat> vertices;
+    float nx, ny, nz, lengthInv = 1.0f / radius;
 
     float radius = 1;
-    unsigned int sectorCount = 36;
-    unsigned int stackCount = 18;
+    unsigned int sectorCount = 128;
+    unsigned int stackCount = 64;
 
     float x, y, z, xy;  // vertex position
 
@@ -69,6 +72,13 @@ void Planet::initVertexData() {
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
+
+            nx = x * lengthInv;
+            ny = y * lengthInv;
+            nz = z * lengthInv;
+            vertices.push_back(nx);
+            vertices.push_back(ny);
+            vertices.push_back(nz);
         }
     }
 
@@ -110,24 +120,27 @@ void Planet::initVertexData() {
     GLuint VBO, EBO;
 
     glGenVertexArrays(1, &this->VAO);
+    glBindVertexArray(this->VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-
-    glBindVertexArray(this->VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(),
                  GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
+                          (void*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
                  indices.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -151,8 +164,6 @@ void Planet::update(const vector<Body*>& other_bodies, float delta_time) {
             distance_normal * G * other_body->mass / (distance_mag * distance_mag);
 
         this->velocity += acceleration * delta_time;
-
-        cout << "Distance: " << stringVec3(distance_vector) << endl;
     }
 
     this->position += this->velocity * delta_time;
