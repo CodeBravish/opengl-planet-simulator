@@ -32,7 +32,7 @@ void Planet::render(const Shader& shader) {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
 
     // Color and Grid on Planet
-    vec3 color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    vec3 color = vec4(0.75f, 0.5f, 0.24f, 1.0f);
 
     unsigned int colorLoc = glGetUniformLocation(shader.ID, "color");
     glUniform4fv(colorLoc, 1, value_ptr(color));

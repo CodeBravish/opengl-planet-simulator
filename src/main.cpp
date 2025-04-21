@@ -13,6 +13,7 @@
 #include <ostream>
 #include <vector>
 
+#include "Camera.h"
 #include "Celestial_Body.h"
 #include "Renderer/Shader.h"
 
@@ -26,6 +27,7 @@ using namespace glm;
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 void processInput(GLFWwindow *window);
 
 const float PI = pi<float>();
@@ -35,11 +37,14 @@ unsigned int screen_width = 1070;
 unsigned int screen_height = 1070;
 
 // Camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10000.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-float cam_yaw = 0.0;
-float cam_pitch = 0.0;
+Camera camera(glm::vec3(0.0f, 0.4f, 10000.0f));
+float lastX = screen_width / 2.0f;
+float lastY = screen_height / 2.0f;
+bool firstMouse = true;
+
+//Time
+float delta_time = 0.0f;
+float sim_delta_time = 0.0f;
 
 int main() {
     // glfw: initialize and configure
@@ -65,8 +70,9 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    // glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, mouse_scroll_callback);
+    // glfwSetMouseButtonCallback(window, mouse_button_callback);
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
@@ -124,9 +130,12 @@ int main() {
     float prev_time = static_cast<float>(glfwGetTime());
     float time_multplier = 1.0f;
 
+    camera.MovementSpeed = 1000.0f;
+
     while (!glfwWindowShouldClose(window)) {
         float curr_time = static_cast<float>(glfwGetTime());
-        float delta_time = (curr_time - prev_time) * time_multplier;
+        delta_time = (curr_time - prev_time);
+        sim_delta_time = delta_time * time_multplier;
         prev_time = curr_time;
 
         processInput(window);
@@ -146,7 +155,7 @@ int main() {
 
         ImGui::DragFloat("s/s", &time_multplier, 1.0f);
 
-        ImGui::DragFloat3("Camera Postion", glm::value_ptr(cameraPos), 0.01f);
+        ImGui::DragFloat3("Camera Postion", glm::value_ptr(camera.Position), 0.01f);
 
         ImGui::End();
 
@@ -155,7 +164,7 @@ int main() {
 
         glm::mat4 view;
 
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        view = camera.GetViewMatrix();
 
         projection =
             perspective(radians(50.0f), (float)screen_width / (float)screen_height,
@@ -200,27 +209,23 @@ int main() {
 // this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window) {
+    if (ImGui::GetIO().WantCaptureKeyboard) return;
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    const vec3 horizontalFront = normalize(cameraFront * vec3(1.0f, 0.0f, 1.0f));
-    const vec3 cameraUpNorm = normalize(cameraUp);
-
-    const float cameraSpeed = 100.0;  // adjust accordingly
-
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraUp;
+        camera.ProcessKeyboard(FORWARD, delta_time);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraUp;
+        camera.ProcessKeyboard(BACKWARD, delta_time);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -=
-            glm::normalize(glm::cross(horizontalFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(LEFT, delta_time);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos +=
-            glm::normalize(glm::cross(horizontalFront, cameraUp)) * cameraSpeed;
-
-    // cout << cameraPos.x << "," << cameraPos.y << "," << cameraPos.z << "," <<
-    // endl;
+        camera.ProcessKeyboard(RIGHT, delta_time);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera.ProcessKeyboard(UP, delta_time);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        camera.ProcessKeyboard(DOWN, delta_time);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this
@@ -237,40 +242,35 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, screen_width, screen_height);
 }
 
-float lastX = 0.0, lastY = 0.0;
-bool first_mouse = true;
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
 
-void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-    if (first_mouse) {
+    if (firstMouse) {
         lastX = xpos;
         lastY = ypos;
-        first_mouse = false;
+        firstMouse = false;
     }
+
     float xoffset = xpos - lastX;
     float yoffset =
-        lastY - ypos;  // reversed since y-coordinates range from bottom to top
+        lastY - ypos;  // reversed since y-coordinates go from bottom to top
+
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
+    if (ImGui::GetIO().WantCaptureMouse) return;
 
-    cam_yaw += xoffset;
-    cam_pitch += yoffset;
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) != GLFW_PRESS) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        return;
+    }
 
-    if (cam_pitch > 89.0f) cam_pitch = 89.0f;
-    if (cam_pitch < -89.0f) cam_pitch = -89.0f;
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    glm::vec3 direction;
-    direction.x = cos(radians(cam_yaw)) * cos(radians(cam_pitch));
-    direction.y = sin(radians(cam_pitch));
-    direction.z = sin(radians(cam_yaw)) * cos(radians(cam_pitch));
-    cameraFront = glm::normalize(direction);
+    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    const float cameraSpeed = 1000.0;  // adjust accordingly
-
-    cameraPos += cameraFront * static_cast<float>(yoffset) * cameraSpeed;
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
