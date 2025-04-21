@@ -15,6 +15,7 @@
 
 #include "Camera.h"
 #include "Celestial_Body.h"
+#include "GravityWell.h"
 #include "Renderer/Shader.h"
 
 #include "imgui.h"
@@ -33,16 +34,16 @@ void processInput(GLFWwindow *window);
 const float PI = pi<float>();
 
 // settings
-unsigned int screen_width = 1070;
-unsigned int screen_height = 1070;
+unsigned int screen_width = 1000;
+unsigned int screen_height = 800;
 
 // Camera
-Camera camera(glm::vec3(0.0f, 0.4f, 10000.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
 float lastX = screen_width / 2.0f;
 float lastY = screen_height / 2.0f;
 bool firstMouse = true;
 
-//Time
+// Time
 float delta_time = 0.0f;
 float sim_delta_time = 0.0f;
 
@@ -102,11 +103,11 @@ int main() {
     // ------------------------------------
     Shader DefaultShader("../assets/shaders/default.vert",
                          "../assets/shaders/default.frag");
-
-    DefaultShader.use();
+    Shader PlanetShader("../assets/shaders/planet.vs",
+                        "../assets/shaders/planet.fs");
 
     vector<Planet> planets = {
-        Planet(vec3(-1500.0f, 0.0f, 0.0f), vec3(0.0f, 0.03f, 0.0f), 50.0f, 71.492f)};
+        Planet(vec3(-1500.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.03f), 5.0f, 71.492f)};
 
     // planets.emplace_back(vec3(2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
     // planets.emplace_back(vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
@@ -119,9 +120,11 @@ int main() {
         bodies.push_back(&planet);
     }
 
-    Star sun(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 10.0e8f, 696.340f);
+    Star sun(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 250.0e8f, 696.340f);
 
     bodies.push_back(&sun);
+
+    GravityWell GravityWell(1000);
 
     // render loop
     // -----------
@@ -153,9 +156,14 @@ int main() {
 
         ImGui::Begin("Menu");
 
-        ImGui::DragFloat("s/s", &time_multplier, 1.0f);
+        ImGui::DragFloat("s/s", &time_multplier, 60.0f * 60.0f);
 
         ImGui::DragFloat3("Camera Postion", glm::value_ptr(camera.Position), 0.01f);
+
+        ImGui::End();
+
+        ImGui::Begin("Settings");
+        ImGui::DragScalar("Grid Size", ImGuiDataType_U64, &GravityWell.slices, 1);
 
         ImGui::End();
 
@@ -177,16 +185,33 @@ int main() {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
         //
+        GravityWell.render(DefaultShader);
 
         // Draw Planet
-        for (unsigned int i = 0; i < planets.size(); i++) {
-            planets[i].update(bodies, delta_time);
-            planets[i].render(DefaultShader);
-        }
-        sun.update(bodies, delta_time);
-        sun.render(DefaultShader);
+        PlanetShader.use();
 
-        cout << endl << endl;
+        PlanetShader.setMat4("view", view);
+        PlanetShader.setMat4("projection", projection);
+
+        PlanetShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+        PlanetShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        PlanetShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        PlanetShader.setFloat("material.shininess", 10.0f);
+
+        PlanetShader.setVec3("light.position", sun.position);
+        PlanetShader.setVec3("light.ambient", 0.0f, 0.0f, 0.0f);
+        PlanetShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+        PlanetShader.setVec3("light.specular", 0.1f, 0.1f, 0.1f);
+
+        PlanetShader.setVec3("cameraPos", camera.Position);
+
+        for (unsigned int i = 0; i < planets.size(); i++) {
+            planets[i].update(bodies, sim_delta_time);
+            planets[i].render(PlanetShader);
+        }
+        DefaultShader.use();
+        sun.update(bodies, sim_delta_time);
+        // sun.render(DefaultShader);
 
         // Rendering
         ImGui::Render();
@@ -222,6 +247,10 @@ void processInput(GLFWwindow *window) {
         camera.ProcessKeyboard(LEFT, delta_time);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, delta_time);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.MovementSpeed = 5000.0f;
+    else
+        camera.MovementSpeed = 1000.0f;
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         camera.ProcessKeyboard(UP, delta_time);
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
