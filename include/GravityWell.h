@@ -1,23 +1,25 @@
 #pragma once
 
-#include "Renderer/Shader.h"
 #include <glad/glad.h>
 #include <glm/geometric.hpp>
 #include <vector>
 
+#include "Camera.h"
+#include "Renderer/Shader.h"
+
 class GravityWell {
    public:
-    unsigned int slices = 100;
-
-    GravityWell(unsigned int slices);
+    GLfloat gridSize;
+    GLfloat mapSize = 10000.0f;
+    GravityWell(GLfloat gridSize);
 
     void render(const Shader& shader);
+    void updateVertexData();
 
    private:
     std::vector<GLfloat> vertices;
     std::vector<GLuint> indices;
 
-    GLuint VAO;
+    GLuint VAO, VBO, EBO;
     void initVertexData();
-    void updateVertexData();
 };

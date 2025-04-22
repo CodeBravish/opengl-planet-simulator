@@ -105,6 +105,8 @@ int main() {
                          "../assets/shaders/default.frag");
     Shader PlanetShader("../assets/shaders/planet.vs",
                         "../assets/shaders/planet.fs");
+    Shader GravityWellShader("../assets/shaders/gravity_well.vs",
+                        "../assets/shaders/gravity_well.fs");
 
     vector<Planet> planets = {
         Planet(vec3(-1500.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.03f), 5.0f, 71.492f)};
@@ -124,7 +126,7 @@ int main() {
 
     bodies.push_back(&sun);
 
-    GravityWell GravityWell(1000);
+    GravityWell GravityWell(200);
 
     // render loop
     // -----------
@@ -133,10 +135,11 @@ int main() {
     float prev_time = static_cast<float>(glfwGetTime());
     float time_multplier = 1.0f;
 
-    camera.MovementSpeed = 1000.0f;
+    camera.MovementSpeed = 100.0f;
 
     while (!glfwWindowShouldClose(window)) {
         float curr_time = static_cast<float>(glfwGetTime());
+        // GravityWell.gridSize += static_cast<float>(glfwGetTime());
         delta_time = (curr_time - prev_time);
         sim_delta_time = delta_time * time_multplier;
         prev_time = curr_time;
@@ -163,7 +166,7 @@ int main() {
         ImGui::End();
 
         ImGui::Begin("Settings");
-        ImGui::DragScalar("Grid Size", ImGuiDataType_U64, &GravityWell.slices, 1);
+        ImGui::DragFloat("Grid Size", &GravityWell.gridSize, 10.0f, 100.0f);
 
         ImGui::End();
 
@@ -184,8 +187,9 @@ int main() {
 
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
-        //
+        // Draw and Update Gravity Well
         GravityWell.render(DefaultShader);
+        GravityWell.updateVertexData();
 
         // Draw Planet
         PlanetShader.use();
