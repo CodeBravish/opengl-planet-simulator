@@ -28,14 +28,11 @@ void Star::render(const Shader& shader) {
     model = glm::rotate(model, (float)glfwGetTime() * this->angular_speed,
                         vec3(0.0f, 0.0f, 1.0f));
 
-    unsigned int modelLoc = glGetUniformLocation(shader.ID, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
+    shader.setMat4("model", model);
 
     // Color and Grid on Planet
-    vec3 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    unsigned int colorLoc = glGetUniformLocation(shader.ID, "color");
-    glUniform4fv(colorLoc, 1, value_ptr(color));
+    vec3 color(1.0f, 1.0f, 1.0f);
+    shader.setVec3("color", color);
 
     // 1. Draw filled sphere
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -126,8 +123,9 @@ void Star::initVertexData() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
                  indices.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glEnable(GL_DEPTH_TEST);
 }

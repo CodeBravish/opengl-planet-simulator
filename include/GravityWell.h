@@ -13,7 +13,7 @@ class GravityWell {
     GLfloat mapSize = 10000.0f;
     GravityWell(GLfloat gridSize);
 
-    void render(const Shader& shader);
+    void render(const Shader& shader, const Camera& camera);
     void updateVertexData();
 
    private:

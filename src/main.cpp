@@ -106,7 +106,7 @@ int main() {
     Shader PlanetShader("../assets/shaders/planet.vs",
                         "../assets/shaders/planet.fs");
     Shader GravityWellShader("../assets/shaders/gravity_well.vs",
-                        "../assets/shaders/gravity_well.fs");
+                             "../assets/shaders/gravity_well.fs");
 
     vector<Planet> planets = {
         Planet(vec3(-1500.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.03f), 5.0f, 71.492f)};
@@ -130,12 +130,14 @@ int main() {
 
     // render loop
     // -----------
-    DefaultShader.use();
 
     float prev_time = static_cast<float>(glfwGetTime());
     float time_multplier = 1.0f;
 
     camera.MovementSpeed = 100.0f;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     while (!glfwWindowShouldClose(window)) {
         float curr_time = static_cast<float>(glfwGetTime());
@@ -170,6 +172,7 @@ int main() {
 
         ImGui::End();
 
+        DefaultShader.use();
         // Camera
         mat4 projection = mat4(1.0f);
 
@@ -188,7 +191,10 @@ int main() {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
         // Draw and Update Gravity Well
-        GravityWell.render(DefaultShader);
+        GravityWellShader.use();
+        GravityWellShader.setMat4("view", view);
+        GravityWellShader.setMat4("projection", projection);
+        GravityWell.render(GravityWellShader, camera);
         GravityWell.updateVertexData();
 
         // Draw Planet
@@ -215,7 +221,7 @@ int main() {
         }
         DefaultShader.use();
         sun.update(bodies, sim_delta_time);
-        // sun.render(DefaultShader);
+        sun.render(DefaultShader);
 
         // Rendering
         ImGui::Render();

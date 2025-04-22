@@ -1,21 +1,30 @@
 #include "GravityWell.h"
+#include "Renderer/Shader.h"
+#include <cmath>
 #include <glm/fwd.hpp>
 
 GravityWell::GravityWell(GLfloat gridSize) : gridSize(gridSize) { initVertexData(); }
 
-void GravityWell::render(const Shader& shader) {
+void GravityWell::render(const Shader& shader, const Camera& camera) {
     glEnable(GL_DEPTH_TEST);
 
     glBindVertexArray(this->VAO);
 
+    glm::vec3 cam = camera.Position;
+    glm::vec3 gridSnap(cam.x - fmodf(cam.x, gridSize), 0.0,
+                       cam.z - fmodf(cam.z, gridSize));
+
     glm::mat4 model(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::translate(model, glm::vec3(-mapSize / 2, 0.0, -mapSize / 2));
+    model = glm::translate(model, gridSnap);
 
     shader.setMat4("model", model);
 
-    glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::vec3 gridColor(1.0f, 1.0f, 1.0f);
 
-    shader.setVec4("color", color);
+    shader.setVec3("gridColor", gridColor);
+    shader.setFloat("mapSize", this->mapSize);
+    shader.setVec3("cameraPos", camera.Position);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
