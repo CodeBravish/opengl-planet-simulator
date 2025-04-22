@@ -26,6 +26,8 @@ void GravityWell::render(const Shader& shader, const Camera& camera) {
     shader.setFloat("mapSize", this->mapSize);
     shader.setVec3("cameraPos", camera.Position);
 
+    glLineWidth(1.0);
+
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
@@ -68,11 +70,11 @@ void GravityWell::updateVertexData(const Camera& camera,
                 float acceleration = G * other_body->mass /
                                     (distance_mag);
 
-                worldVertex.y -= acceleration;
+                worldVertex.y -= acceleration * 2.0e5f;
             }
 
             this->vertices.push_back(worldVertex.x);
-            this->vertices.push_back(worldVertex.y * 2e5);
+            this->vertices.push_back(worldVertex.y);
             this->vertices.push_back(worldVertex.z);
         }
     }

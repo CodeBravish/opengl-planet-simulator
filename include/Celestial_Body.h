@@ -21,12 +21,32 @@ class Body {
     float mass;
 
     Body(glm::vec3 position, glm::vec3 velocity, float mass)
-        : position(position), velocity(velocity), mass(mass) {}
+        : position(position), velocity(velocity), mass(mass) {
+        initOrbitVertexData();
+    }
+
+    // void predictPositions(std::vector<GLfloat>& positionVector,
+    //                       const std::vector<Body*>& other_bodies, glm::vec3
+    //                       position, glm::vec3 velocity, float timestep, unsigned
+    //                       int steps);
+
+    std::vector<GLfloat> predictPositions(const Body& me,
+                                            const std::vector<Body*>& others,
+                                            float timestep, unsigned int steps);
+    void drawOrbit(Shader& shader);
+    void updateOrbitVertexData();
+
+   protected:
+    GLuint orbitVAO, orbitVBO, orbitEBO;
+
+    std::vector<GLfloat> orbitVertices;
+    std::vector<GLuint> orbitIndices;
+
+    void initOrbitVertexData();
 };
 
 class Planet : public Body {
    public:
-
     // Planet();
     Planet(glm::vec3 position, glm::vec3 velocity, float mass = 500.0f,
            float radius = 1.0f);

@@ -109,10 +109,10 @@ int main() {
     Shader GravityWellShader("../assets/shaders/gravity_well.vs",
                              "../assets/shaders/gravity_well.fs");
 
-    vector<Planet> planets = {
-        Planet(vec3(-2000.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.03f), 5000.0e4f,
-               100.492f),
-        Planet(vec3(-2250.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.02f), 5000.0f, 25.492f)};
+    vector<Planet> planets = {Planet(vec3(-2000.0f, 0.0f, 0.0f),
+                                     vec3(0.0f, 0.0f, 0.03f), 5000.0e4f, 100.492f),
+                              Planet(vec3(-2250.0f, 0.0f, 0.0f),
+                                     vec3(0.0f, 0.0f, 0.02f), 5000.0f, 25.492f)};
 
     // planets.emplace_back(vec3(2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
     // planets.emplace_back(vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
@@ -164,14 +164,26 @@ int main() {
 
         ImGui::Begin("Menu");
 
-        ImGui::DragFloat("s/s", &time_multplier, 60.0f * 60.0f);
 
         ImGui::DragFloat3("Camera Postion", glm::value_ptr(camera.Position), 0.01f);
 
         ImGui::End();
 
         ImGui::Begin("Settings");
+        ImGui::Text("Simulation Controls");
+        ImGui::Separator();
+        ImGui::DragFloat("s/s", &time_multplier, 60.0f * 60.0f);
+        ImGui::SliderFloat("Time Scale", &time_multplier, -100000.0f, 100000.0f);
+        static bool paused = false;
+        static float timestep = 0.016f;  // 60 FPS
+        if (ImGui::Button(paused ? "Play" : "Pause")) {
+            paused = !paused;
+        }
+        if (paused) sim_delta_time = 0.0f;
+        ImGui::Text("Gravity Well");
+        ImGui::Separator();
         ImGui::DragFloat("Grid Size", &GravityWell.gridSize, 10.0f, 100.0f);
+
 
         ImGui::End();
 
@@ -223,6 +235,10 @@ int main() {
             planets[i].render(PlanetShader);
         }
         DefaultShader.use();
+        for (unsigned int i = 0; i < planets.size(); i++) {
+            planets[i].updateOrbitVertexData();
+            planets[i].drawOrbit(DefaultShader);
+        }
         sun.update(bodies, sim_delta_time);
         sun.render(DefaultShader);
 

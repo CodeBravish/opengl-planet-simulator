@@ -31,8 +31,8 @@ void Star::render(const Shader& shader) {
     shader.setMat4("model", model);
 
     // Color and Grid on Planet
-    vec3 color(1.0f, 1.0f, 1.0f);
-    shader.setVec3("color", color);
+    vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+    shader.setVec4("color", color);
 
     // 1. Draw filled sphere
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
