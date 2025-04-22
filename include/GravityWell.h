@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Camera.h"
+#include "Celestial_Body.h"
 #include "Renderer/Shader.h"
 
 class GravityWell {
@@ -14,7 +15,7 @@ class GravityWell {
     GravityWell(GLfloat gridSize);
 
     void render(const Shader& shader, const Camera& camera);
-    void updateVertexData();
+    void updateVertexData(const Camera& camera, const std::vector<Body*>& other_bodies);
 
    private:
     std::vector<GLfloat> vertices;

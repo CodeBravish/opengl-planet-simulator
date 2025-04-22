@@ -10,5 +10,5 @@ out vec4 FragColor;
 void main() {
     float fragDistance = length(vec3(cameraPos.x, 0.0, cameraPos.z) - FragPos);
 
-    FragColor = vec4(gridColor, max(1.0 - fragDistance / (mapSize/2), 0.0));
+    FragColor = vec4(gridColor, 1.0 - (fragDistance / (mapSize/2)));
 }

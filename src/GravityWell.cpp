@@ -10,13 +10,13 @@ void GravityWell::render(const Shader& shader, const Camera& camera) {
 
     glBindVertexArray(this->VAO);
 
-    glm::vec3 cam = camera.Position;
-    glm::vec3 gridSnap(cam.x - fmodf(cam.x, gridSize), 0.0,
-                       cam.z - fmodf(cam.z, gridSize));
+    // glm::vec3 cam = camera.Position;
+    // glm::vec3 gridSnap(cam.x - fmodf(cam.x, gridSize), 0.0,
+    //                    cam.z - fmodf(cam.z, gridSize));
 
     glm::mat4 model(1.0f);
-    model = glm::translate(model, glm::vec3(-mapSize / 2, 0.0, -mapSize / 2));
-    model = glm::translate(model, gridSnap);
+    // model = glm::translate(model, glm::vec3(-mapSize / 2, 0.0, -mapSize / 2));
+    // model = glm::translate(model, gridSnap);
 
     shader.setMat4("model", model);
 
@@ -31,9 +31,18 @@ void GravityWell::render(const Shader& shader, const Camera& camera) {
     glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-void GravityWell::updateVertexData() {
+void GravityWell::updateVertexData(const Camera& camera,
+                                   const std::vector<Body*>& other_bodies) {
     this->vertices.clear();
     this->indices.clear();
+
+    glm::vec3 cam = camera.Position;
+    glm::vec3 gridSnap(cam.x - fmodf(cam.x, gridSize), 0.0f,
+                       cam.z - fmodf(cam.z, gridSize));
+
+    glm::mat4 model(1.0f);
+    model = glm::translate(model, glm::vec3(-mapSize / 2.0f, 0.0f, -mapSize / 2.0f));
+    model = glm::translate(model, gridSnap);
 
     GLfloat x, y = 0.0f, z;
     unsigned int slices = static_cast<unsigned int>(mapSize / gridSize);
@@ -43,9 +52,28 @@ void GravityWell::updateVertexData() {
 
         for (unsigned int j = 0; j < slices; j++) {
             z = j * gridSize;
-            this->vertices.push_back(x);
-            this->vertices.push_back(y);
-            this->vertices.push_back(z);
+            glm::vec3 worldVertex = model * glm::vec4(x, y, z, 1.0f);
+
+            const float G = 6.67e-11f;
+
+            for (unsigned int i = 0; i < other_bodies.size(); i++) {
+                const Body* other_body = other_bodies[i];
+
+                glm::vec3 distance_vector = other_body->position - worldVertex;
+                float distance_mag = glm::length(distance_vector);
+
+                if (distance_mag == 0) continue;
+
+                // Calculate Gravitional Acceleration from Each Planet
+                float acceleration = G * other_body->mass /
+                                    (distance_mag);
+
+                worldVertex.y -= acceleration;
+            }
+
+            this->vertices.push_back(worldVertex.x);
+            this->vertices.push_back(worldVertex.y * 2e5);
+            this->vertices.push_back(worldVertex.z);
         }
     }
 

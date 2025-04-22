@@ -38,7 +38,7 @@ unsigned int screen_width = 1000;
 unsigned int screen_height = 800;
 
 // Camera
-Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 5000.0f));
 float lastX = screen_width / 2.0f;
 float lastY = screen_height / 2.0f;
 bool firstMouse = true;
@@ -75,6 +75,7 @@ int main() {
     glfwSetScrollCallback(window, mouse_scroll_callback);
     // glfwSetMouseButtonCallback(window, mouse_button_callback);
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSwapInterval(0);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -109,7 +110,9 @@ int main() {
                              "../assets/shaders/gravity_well.fs");
 
     vector<Planet> planets = {
-        Planet(vec3(-1500.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.03f), 5.0f, 71.492f)};
+        Planet(vec3(-2000.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.03f), 5000.0e4f,
+               100.492f),
+        Planet(vec3(-2250.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.02f), 5000.0f, 25.492f)};
 
     // planets.emplace_back(vec3(2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
     // planets.emplace_back(vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
@@ -126,13 +129,13 @@ int main() {
 
     bodies.push_back(&sun);
 
-    GravityWell GravityWell(200);
+    GravityWell GravityWell(50);
 
     // render loop
     // -----------
 
     float prev_time = static_cast<float>(glfwGetTime());
-    float time_multplier = 1.0f;
+    float time_multplier = 10000.0f;
 
     camera.MovementSpeed = 100.0f;
 
@@ -195,7 +198,7 @@ int main() {
         GravityWellShader.setMat4("view", view);
         GravityWellShader.setMat4("projection", projection);
         GravityWell.render(GravityWellShader, camera);
-        GravityWell.updateVertexData();
+        GravityWell.updateVertexData(camera, bodies);
 
         // Draw Planet
         PlanetShader.use();
@@ -210,7 +213,7 @@ int main() {
 
         PlanetShader.setVec3("light.position", sun.position);
         PlanetShader.setVec3("light.ambient", 0.0f, 0.0f, 0.0f);
-        PlanetShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+        PlanetShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
         PlanetShader.setVec3("light.specular", 0.1f, 0.1f, 0.1f);
 
         PlanetShader.setVec3("cameraPos", camera.Position);
@@ -222,6 +225,13 @@ int main() {
         DefaultShader.use();
         sun.update(bodies, sim_delta_time);
         sun.render(DefaultShader);
+
+        ImGui::Begin("Performance");
+
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+
+        ImGui::End();
 
         // Rendering
         ImGui::Render();
