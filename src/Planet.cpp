@@ -168,5 +168,5 @@ void Planet::update(const vector<Body*>& other_bodies, float delta_time) {
 
     this->position += this->velocity * delta_time;
 
-    this->orbitVertices = predictPositions(*this, other_bodies, 1000.0f, 1000);
+    // this->orbitVertices = predictPositions(*this, other_bodies, 1000.0f, 300);
 }

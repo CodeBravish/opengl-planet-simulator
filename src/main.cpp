@@ -33,7 +33,7 @@ void processInput(GLFWwindow *window);
 
 const float PI = pi<float>();
 
-// settings
+// Global Settings
 unsigned int screen_width = 1000;
 unsigned int screen_height = 800;
 
@@ -98,7 +98,7 @@ int main() {
         window, true);  // Second param install_callback=true will install GLFW
                         // callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init();
-    // ##########
+    //
 
     // build and compile our shader program
     // ------------------------------------
@@ -114,26 +114,17 @@ int main() {
                               Planet(vec3(-2250.0f, 0.0f, 0.0f),
                                      vec3(0.0f, 0.0f, 0.02f), 5000.0f, 25.492f)};
 
-    // planets.emplace_back(vec3(2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
-    // planets.emplace_back(vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f));
-
-    // Planet planet1(vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f));
-
     vector<Body *> bodies;
-
     for (auto &planet : planets) {
         bodies.push_back(&planet);
     }
 
     Star sun(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 250.0e8f, 696.340f);
-
     bodies.push_back(&sun);
 
     GravityWell GravityWell(50);
 
-    // render loop
-    // -----------
-
+    // MAIN RENDER LOOP
     float prev_time = static_cast<float>(glfwGetTime());
     float time_multplier = 10000.0f;
 
@@ -143,33 +134,26 @@ int main() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     while (!glfwWindowShouldClose(window)) {
+        // Timing
         float curr_time = static_cast<float>(glfwGetTime());
-        // GravityWell.gridSize += static_cast<float>(glfwGetTime());
         delta_time = (curr_time - prev_time);
         sim_delta_time = delta_time * time_multplier;
         prev_time = curr_time;
+        //
 
         processInput(window);
-
-        // Clear Screen
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        // ###########
+        //
 
-        ImGui::Begin("Menu");
-
-
-        ImGui::DragFloat3("Camera Postion", glm::value_ptr(camera.Position), 0.01f);
-
-        ImGui::End();
-
+        // ImGUI
         ImGui::Begin("Settings");
+
         ImGui::Text("Simulation Controls");
         ImGui::Separator();
         ImGui::DragFloat("s/s", &time_multplier, 60.0f * 60.0f);
@@ -180,37 +164,27 @@ int main() {
             paused = !paused;
         }
         if (paused) sim_delta_time = 0.0f;
+
+        ImGui::Spacing();
         ImGui::Text("Gravity Well");
         ImGui::Separator();
         ImGui::DragFloat("Grid Size", &GravityWell.gridSize, 10.0f, 100.0f);
-
-
         ImGui::End();
+        //
 
-        DefaultShader.use();
         // Camera
-        mat4 projection = mat4(1.0f);
-
-        glm::mat4 view;
-
-        view = camera.GetViewMatrix();
-
-        projection =
+        mat4 view = camera.GetViewMatrix();
+        mat4 projection =
             perspective(radians(50.0f), (float)screen_width / (float)screen_height,
                         0.1f, 1000000.0f);
 
-        unsigned int viewLoc = glGetUniformLocation(DefaultShader.ID, "view");
-        unsigned int projectionLoc =
-            glGetUniformLocation(DefaultShader.ID, "projection");
-
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
         // Draw and Update Gravity Well
         GravityWellShader.use();
         GravityWellShader.setMat4("view", view);
         GravityWellShader.setMat4("projection", projection);
-        GravityWell.render(GravityWellShader, camera);
         GravityWell.updateVertexData(camera, bodies);
+        GravityWell.render(GravityWellShader, camera);
+        //
 
         // Draw Planet
         PlanetShader.use();
@@ -234,41 +208,43 @@ int main() {
             planets[i].update(bodies, sim_delta_time);
             planets[i].render(PlanetShader);
         }
+        //
+
+        // Default Shader
         DefaultShader.use();
-        for (unsigned int i = 0; i < planets.size(); i++) {
-            planets[i].updateOrbitVertexData();
-            planets[i].drawOrbit(DefaultShader);
-        }
+        DefaultShader.setMat4("view", view);
+        DefaultShader.setMat4("projection", projection);
+        // for (unsigned int i = 0; i < planets.size(); i++) {
+        //     planets[i].updateOrbitVertexData();
+        //     planets[i].drawOrbit(DefaultShader);
+        // }
         sun.update(bodies, sim_delta_time);
         sun.render(DefaultShader);
+        //
 
         ImGui::Begin("Performance");
-
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
         ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
-
         ImGui::End();
 
         // Rendering
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        // #################
+        //
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
+    // Terminate, clearing all previously allocated GLFW resources.
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     glfwTerminate();
     return 0;
+    //
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released
-// this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window) {
     if (ImGui::GetIO().WantCaptureKeyboard) return;
 
@@ -293,9 +269,6 @@ void processInput(GLFWwindow *window) {
         camera.ProcessKeyboard(DOWN, delta_time);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this
-// callback function executes
-// ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     // make sure the viewport matches the new window dimensions; note that
     // width and height will be significantly larger than specified on retina
