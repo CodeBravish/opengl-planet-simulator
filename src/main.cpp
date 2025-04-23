@@ -126,6 +126,9 @@ int main() {
 
     // MAIN RENDER LOOP
     float prev_time = static_cast<float>(glfwGetTime());
+    float accumulator = 0.0f;
+    float accumulator_30fps = 0.0f;
+    float fixed_time_step = 1.0f / 60.0f;
     float time_multplier = 10000.0f;
 
     camera.MovementSpeed = 100.0f;
@@ -136,9 +139,12 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         // Timing
         float curr_time = static_cast<float>(glfwGetTime());
-        delta_time = (curr_time - prev_time);
-        sim_delta_time = delta_time * time_multplier;
+        delta_time = curr_time - prev_time;
+        sim_delta_time = fixed_time_step * time_multplier;
         prev_time = curr_time;
+
+        accumulator += delta_time;
+        accumulator_30fps += delta_time;
         //
 
         processInput(window);
@@ -172,19 +178,30 @@ int main() {
         ImGui::End();
         //
 
+        // Simulation Step
+        while (accumulator >= fixed_time_step) {
+            for (unsigned int i = 0; i < planets.size(); i++) {
+                planets[i].update(bodies, fixed_time_step * time_multplier);
+            }
+
+            sun.update(bodies, fixed_time_step * time_multplier);
+
+            accumulator -= fixed_time_step;
+            cout << accumulator << endl;
+        }
+        if (accumulator_30fps >= 1.0f / 30.0f) {
+            GravityWell.updateVertexData(camera, bodies);
+
+            accumulator_30fps = 0;
+        }
+        cout << "---------------------" << endl;
+        //
+
         // Camera
         mat4 view = camera.GetViewMatrix();
         mat4 projection =
             perspective(radians(50.0f), (float)screen_width / (float)screen_height,
                         0.1f, 1000000.0f);
-
-        // Draw and Update Gravity Well
-        GravityWellShader.use();
-        GravityWellShader.setMat4("view", view);
-        GravityWellShader.setMat4("projection", projection);
-        GravityWell.updateVertexData(camera, bodies);
-        GravityWell.render(GravityWellShader, camera);
-        //
 
         // Draw Planet
         PlanetShader.use();
@@ -205,7 +222,6 @@ int main() {
         PlanetShader.setVec3("cameraPos", camera.Position);
 
         for (unsigned int i = 0; i < planets.size(); i++) {
-            planets[i].update(bodies, sim_delta_time);
             planets[i].render(PlanetShader);
         }
         //
@@ -218,8 +234,14 @@ int main() {
         //     planets[i].updateOrbitVertexData();
         //     planets[i].drawOrbit(DefaultShader);
         // }
-        sun.update(bodies, sim_delta_time);
         sun.render(DefaultShader);
+        //
+
+        // Draw and Update Gravity Well
+        GravityWellShader.use();
+        GravityWellShader.setMat4("view", view);
+        GravityWellShader.setMat4("projection", projection);
+        GravityWell.render(GravityWellShader, camera);
         //
 
         ImGui::Begin("Performance");
