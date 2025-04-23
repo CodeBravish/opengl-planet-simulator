@@ -31,8 +31,8 @@ class Body {
     //                       int steps);
 
     std::vector<GLfloat> predictPositions(const Body& me,
-                                            const std::vector<Body*>& others,
-                                            float timestep, unsigned int steps);
+                                          const std::vector<Body*>& others,
+                                          float timestep, unsigned int steps);
     void drawOrbit(Shader& shader);
     void updateOrbitVertexData();
 
@@ -75,7 +75,7 @@ class Planet : public Body {
 
 class Star : public Body {
    public:
-    glm::vec3 color = glm::vec3(1.0f, 1.0f, 0.0f);
+    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 
     Star(glm::vec3 position, glm::vec3 velocity, float mass, float radius);
 

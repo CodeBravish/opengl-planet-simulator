@@ -46,7 +46,7 @@ void GravityWell::updateVertexData(const Camera& camera,
     model = glm::translate(model, glm::vec3(-mapSize / 2.0f, 0.0f, -mapSize / 2.0f));
     model = glm::translate(model, gridSnap);
 
-    GLfloat x, y = 0.0f, z;
+    GLfloat x, y = 50.0f, z;
     unsigned int slices = static_cast<unsigned int>(mapSize / gridSize);
 
     for (unsigned int i = 0; i < slices; i++) {

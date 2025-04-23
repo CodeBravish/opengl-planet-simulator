@@ -1,4 +1,5 @@
 #include "Celestial_Body.h"
+#include "GravityWell.h"
 #include "Renderer/Shader.h"
 #include "utils/Formating.h"
 
@@ -30,13 +31,17 @@ void Star::render(const Shader& shader) {
 
     shader.setMat4("model", model);
 
+    glDisable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+
     // Color and Grid on Planet
-    vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
-    shader.setVec4("color", color);
+    shader.setVec3("color", this->color);
 
     // 1. Draw filled sphere
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    glEnable(GL_BLEND);
 }
 
 void Star::initVertexData() {

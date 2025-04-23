@@ -1,5 +1,6 @@
 #include "Celestial_Body.h"
 #include "Renderer/Shader.h"
+#include "Settings.h"
 #include "utils/Formating.h"
 #include "utils/Geometry.h"
 
@@ -14,6 +15,7 @@ using glm::mat4;
 using glm::vec3;
 using glm::vec4;
 using namespace std;
+
 
 Planet::Planet(vec3 position, vec3 velocity, float mass, float radius)
     : Body(position, velocity, mass), radius(radius) {
@@ -168,5 +170,6 @@ void Planet::update(const vector<Body*>& other_bodies, float delta_time) {
 
     this->position += this->velocity * delta_time;
 
-    // this->orbitVertices = predictPositions(*this, other_bodies, 1000.0f, 300);
+    if (Settings::get().showOrbit)
+        this->orbitVertices = predictPositions(*this, other_bodies, 1000.0f, 300);
 }

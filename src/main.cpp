@@ -18,6 +18,7 @@
 #include "GravityWell.h"
 #include "Renderer/Shader.h"
 
+#include "Settings.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -110,8 +111,8 @@ int main() {
                              "../assets/shaders/gravity_well.fs");
 
     vector<Planet> planets = {Planet(vec3(-2000.0f, 0.0f, 0.0f),
-                                     vec3(0.0f, 0.0f, 0.03f), 5000.0e4f, 100.492f),
-                              Planet(vec3(-2250.0f, 0.0f, 0.0f),
+                                     vec3(0.0f, 0.0f, 0.03f), 5000.0e5f, 100.492f),
+                              Planet(vec3(-2300.0f, 0.0f, 0.0f),
                                      vec3(0.0f, 0.0f, 0.02f), 5000.0f, 25.492f)};
 
     vector<Body *> bodies;
@@ -175,16 +176,22 @@ int main() {
         ImGui::Text("Gravity Well");
         ImGui::Separator();
         ImGui::DragFloat("Grid Size", &GravityWell.gridSize, 10.0f, 100.0f);
+        ImGui::Text("Planets");
+        ImGui::Separator();
+        ImGui::Checkbox("Show Orbit", &Settings::get().showOrbit);
+        ImGui::SameLine();
+        if (paused) sim_delta_time = 0.0f;
+
         ImGui::End();
         //
 
         // Simulation Step
         while (accumulator >= fixed_time_step) {
             for (unsigned int i = 0; i < planets.size(); i++) {
-                planets[i].update(bodies, fixed_time_step * time_multplier);
+                planets[i].update(bodies, sim_delta_time);
             }
 
-            sun.update(bodies, fixed_time_step * time_multplier);
+            sun.update(bodies, sim_delta_time);
 
             accumulator -= fixed_time_step;
             cout << accumulator << endl;
@@ -197,11 +204,23 @@ int main() {
         cout << "---------------------" << endl;
         //
 
-        // Camera
+        // Camera Matrix
         mat4 view = camera.GetViewMatrix();
         mat4 projection =
             perspective(radians(50.0f), (float)screen_width / (float)screen_height,
                         0.1f, 1000000.0f);
+
+        // Default Shader
+        DefaultShader.use();
+        DefaultShader.setMat4("view", view);
+        DefaultShader.setMat4("projection", projection);
+        for (unsigned int i = 0; i < planets.size() && Settings::get().showOrbit;
+             i++) {
+            planets[i].updateOrbitVertexData();
+            planets[i].drawOrbit(DefaultShader);
+        }
+        sun.render(DefaultShader);
+        //
 
         // Draw Planet
         PlanetShader.use();
@@ -216,7 +235,7 @@ int main() {
 
         PlanetShader.setVec3("light.position", sun.position);
         PlanetShader.setVec3("light.ambient", 0.0f, 0.0f, 0.0f);
-        PlanetShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+        PlanetShader.setVec3("light.diffuse", sun.color.r, sun.color.g, sun.color.b);
         PlanetShader.setVec3("light.specular", 0.1f, 0.1f, 0.1f);
 
         PlanetShader.setVec3("cameraPos", camera.Position);
@@ -224,17 +243,6 @@ int main() {
         for (unsigned int i = 0; i < planets.size(); i++) {
             planets[i].render(PlanetShader);
         }
-        //
-
-        // Default Shader
-        DefaultShader.use();
-        DefaultShader.setMat4("view", view);
-        DefaultShader.setMat4("projection", projection);
-        // for (unsigned int i = 0; i < planets.size(); i++) {
-        //     planets[i].updateOrbitVertexData();
-        //     planets[i].drawOrbit(DefaultShader);
-        // }
-        sun.render(DefaultShader);
         //
 
         // Draw and Update Gravity Well
