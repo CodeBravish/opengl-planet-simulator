@@ -51,8 +51,8 @@ void Planet::initVertexData() {
     float nx, ny, nz, lengthInv = 1.0f / radius;
 
     float radius = 1;
-    unsigned int sectorCount = 128;
-    unsigned int stackCount = 64;
+    unsigned int sectorCount = radius * 64;
+    unsigned int stackCount = radius * 32;
 
     float x, y, z, xy;  // vertex position
 
