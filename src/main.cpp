@@ -22,6 +22,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
 
 using namespace std;
 using namespace glm;
@@ -163,8 +164,8 @@ int main() {
 
         ImGui::Text("Simulation Controls");
         ImGui::Separator();
-        ImGui::DragFloat("s/s", &time_multplier, 60.0f * 60.0f);
-        ImGui::SliderFloat("Time Scale", &time_multplier, -100000.0f, 100000.0f);
+        ImGui::SliderFloat("Time Multplier", &time_multplier, -100000.0f, 100000.0f,
+                           "%.3f sec/s");
         static bool paused = false;
         static float timestep = 0.016f;  // 60 FPS
         if (ImGui::Button(paused ? "Play" : "Pause")) {
@@ -175,11 +176,11 @@ int main() {
         ImGui::Spacing();
         ImGui::Text("Gravity Well");
         ImGui::Separator();
+        ImGui::Checkbox("Show Grid", &Settings::get().showGravityWell);
         ImGui::DragFloat("Grid Size", &GravityWell.gridSize, 10.0f, 100.0f);
         ImGui::Text("Planets");
         ImGui::Separator();
         ImGui::Checkbox("Show Orbit", &Settings::get().showOrbit);
-        ImGui::SameLine();
         if (paused) sim_delta_time = 0.0f;
 
         ImGui::End();
@@ -194,10 +195,14 @@ int main() {
             sun.update(bodies, sim_delta_time);
 
             accumulator -= fixed_time_step;
+
+            camera.LookAt(planets[1].position);
+
             cout << accumulator << endl;
         }
         if (accumulator_30fps >= 1.0f / 30.0f) {
-            GravityWell.updateVertexData(camera, bodies);
+            if (Settings::get().showGravityWell)
+                GravityWell.updateVertexData(camera, bodies);
 
             accumulator_30fps = 0;
         }
@@ -246,10 +251,12 @@ int main() {
         //
 
         // Draw and Update Gravity Well
-        GravityWellShader.use();
-        GravityWellShader.setMat4("view", view);
-        GravityWellShader.setMat4("projection", projection);
-        GravityWell.render(GravityWellShader, camera);
+        if (Settings::get().showGravityWell) {
+            GravityWellShader.use();
+            GravityWellShader.setMat4("view", view);
+            GravityWellShader.setMat4("projection", projection);
+            GravityWell.render(GravityWellShader, camera);
+        }
         //
 
         ImGui::Begin("Performance");
@@ -297,6 +304,8 @@ void processInput(GLFWwindow *window) {
         camera.ProcessKeyboard(UP, delta_time);
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, delta_time);
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        camera.isLookAtMode = !camera.isLookAtMode;
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -340,5 +349,6 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
 }
 
 void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+    if (ImGui::GetIO().WantCaptureKeyboard) return;
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }

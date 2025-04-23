@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include <glad/glad.h>
+#include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -32,6 +33,10 @@ class Camera {
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
+    glm::vec3 LookAtPosition;
+    float LookAtDistance = 1000.0f;
+    bool isLookAtMode = true;
+
     // euler Angles
     float Yaw;
     float Pitch;
@@ -70,8 +75,18 @@ class Camera {
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix() {
-        imgWindow();
-        return glm::lookAt(Position, Position + Front, Up);
+        this->ImgGUI();
+
+        if (isLookAtMode) {
+            Position = LookAtPosition - (Front * LookAtDistance);
+            return glm::lookAt(Position, LookAtPosition, WorldUp);
+        } else {
+            return glm::lookAt(Position, Position + Front, Up);
+        }
+    }
+
+    void LookAt(glm::vec3& pos) {
+        LookAtPosition = pos;
     }
 
     // processes input received from any keyboard-like input system. Accepts input
@@ -80,7 +95,7 @@ class Camera {
     void ProcessKeyboard(Camera_Movement direction, float deltaTime) {
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD) Position += glm::cross(WorldUp, Right) * velocity;
-        if (direction == BACKWARD) Position -= glm::cross(WorldUp, Right)  * velocity;
+        if (direction == BACKWARD) Position -= glm::cross(WorldUp, Right) * velocity;
         if (direction == LEFT) Position -= Right * velocity;
         if (direction == RIGHT) Position += Right * velocity;
         if (direction == UP) Position += WorldUp * velocity;
@@ -113,6 +128,8 @@ class Camera {
         Zoom -= (float)yoffset;
         if (Zoom < 1.0f) Zoom = 1.0f;
         if (Zoom > 45.0f) Zoom = 45.0f;
+
+        if (isLookAtMode) LookAtDistance -= (float)yoffset * 100.0f;
     }
 
    private:
@@ -131,7 +148,7 @@ class Camera {
                                // results in slower movement.
         Up = glm::normalize(glm::cross(Right, Front));
     }
-    void imgWindow() {
+    void ImgGUI() {
         ImGui::Begin("Camera");
 
         ImGui::DragFloat3("Front", glm::value_ptr(Front), 0.01f);

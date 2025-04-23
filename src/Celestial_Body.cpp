@@ -14,7 +14,11 @@ std::vector<GLfloat> Body::predictPositions(const Body& me,
     const float G = 6.67e-11f;
 
     std::vector<GLfloat> path;
-    path.reserve(steps * 3);
+    path.reserve(steps * 3 + 1);
+
+    path.push_back(pos.x);
+    path.push_back(pos.y);
+    path.push_back(pos.z);
 
     for (unsigned int i = 0; i < steps; ++i) {
         glm::vec3 netAcc(0.0f);
